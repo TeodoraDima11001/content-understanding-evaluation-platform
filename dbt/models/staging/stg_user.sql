@@ -3,4 +3,4 @@ SELECT
     age,
     country,
     subscription
-FROM {{ source('raw', 'users') }}
+FROM read_csv_auto('data/raw/users.csv');
