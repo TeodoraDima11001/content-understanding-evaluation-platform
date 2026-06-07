@@ -1,5 +1,6 @@
 SELECT
     user_id,
+    age,
     country,
-    subscription_type
-FROM {{ source('raw', 'dim_user') }}
+    subscription
+FROM {{ source('raw', 'users') }}
