@@ -1,12 +1,17 @@
-CREATE TABLE fact_content_events (
-    event_id BIGINT,
-    content_id VARCHAR(50),
-    user_id VARCHAR(50),
-    event_timestamp TIMESTAMP,
-    event_type VARCHAR(50),
-    watch_time_seconds INT,
-    completion_rate FLOAT,
-    device_type VARCHAR(50),
-    country VARCHAR(50),
-    session_id VARCHAR(100)
-);
+SELECT
+    e.user_id,
+    e.content_id,
+    u.age,
+    u.country,
+    u.subscription,
+    e.watch_time,
+    e.click,
+
+    CASE 
+        WHEN e.watch_time > 20 THEN 1 
+        ELSE 0 
+    END AS high_engagement
+
+FROM read_csv_auto('data/raw/content_events.csv') e
+LEFT JOIN read_csv_auto('data/raw/users.csv') u
+ON e.user_id = u.user_id;
