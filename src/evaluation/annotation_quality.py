@@ -1,40 +1,42 @@
 import numpy as np
-from scipy.stats import entropy
+import pandas as pd
 
 
 class AnnotationQualityEvaluator:
     """
-    Evaluates annotation quality across human + LLM + system labels.
-    Designed for Spotify-style content understanding pipelines.
+    Production-style evaluation of annotation quality.
+    Works on dataframe-level inputs (Spotify-style).
     """
 
-    def __init__(self, human_labels, system_labels):
-        self.human = np.array(human_labels)
-        self.system = np.array(system_labels)
+    def __init__(self, df, label_col="label", gold_col="human_label", group_col=None):
+        self.df = df
+        self.label_col = label_col
+        self.gold_col = gold_col
+        self.group_col = group_col
 
-    def agreement_rate(self):
-        return np.mean(self.human == self.system)
+    def accuracy(self):
+        return (self.df[self.label_col] == self.df[self.gold_col]).mean()
 
-    def label_distribution_shift(self):
+    def disagreement_rate(self):
+        return 1 - self.accuracy()
+
+    def group_metrics(self):
         """
-        Measures how much system predictions deviate from human labeling distribution.
-        (Important for taxonomy drift detection)
+        Spotify-style requirement:
+        performance varies by segment (content type / language / genre)
         """
-        human_dist = np.bincount(self.human) / len(self.human)
-        system_dist = np.bincount(self.system) / len(self.system)
+        if not self.group_col:
+            return None
 
-        # pad to same length
-        max_len = max(len(human_dist), len(system_dist))
-        human_dist = np.pad(human_dist, (0, max_len - len(human_dist)))
-        system_dist = np.pad(system_dist, (0, max_len - len(system_dist)))
+        return self.df.groupby(self.group_col).apply(
+            lambda x: (x[self.label_col] == x[self.gold_col]).mean()
+        ).to_dict()
 
-        return entropy(human_dist, system_dist)
-
-    def bias_detection(self):
+    def confidence_proxy(self):
         """
-        Detects systematic over/under prediction bias.
+        Simulates annotation uncertainty signal.
         """
         return {
-            "over_prediction_rate": float(np.mean(self.system > self.human)),
-            "under_prediction_rate": float(np.mean(self.system < self.human))
+            "low_confidence_rate": (self.df["confidence"] < 0.7).mean()
+            if "confidence" in self.df.columns else None
         }
