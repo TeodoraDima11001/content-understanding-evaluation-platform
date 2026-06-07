@@ -1,30 +1,41 @@
 import numpy as np
+import pandas as pd
 
 
 class LLMEvaluator:
     """
-    Evaluates LLM annotation quality vs human ground truth.
+    Evaluates LLM-generated annotations vs human labels.
     """
 
-    def __init__(self, human_labels, llm_labels):
-        self.human = np.array(human_labels)
-        self.llm = np.array(llm_labels)
+    def __init__(self, df, llm_col="llm_label", human_col="human_label"):
+        self.df = df
+        self.llm_col = llm_col
+        self.human_col = human_col
 
     def accuracy(self):
-        return np.mean(self.human == self.llm)
+        return (self.df[self.llm_col] == self.df[self.human_col]).mean()
 
-    def error_rate(self):
-        return 1 - self.accuracy()
+    def false_positive_rate(self):
+        fp = (self.df[self.llm_col] == 1) & (self.df[self.human_col] == 0)
+        return fp.mean()
 
-    def confusion_matrix_metrics(self):
-        tp = np.sum((self.llm == 1) & (self.human == 1))
-        tn = np.sum((self.llm == 0) & (self.human == 0))
-        fp = np.sum((self.llm == 1) & (self.human == 0))
-        fn = np.sum((self.llm == 0) & (self.human == 1))
+    def false_negative_rate(self):
+        fn = (self.df[self.llm_col] == 0) & (self.df[self.human_col] == 1)
+        return fn.mean()
 
+    def confusion_summary(self):
         return {
-            "precision": tp / (tp + fp + 1e-9),
-            "recall": tp / (tp + fn + 1e-9),
-            "false_positive_rate": fp / (fp + tn + 1e-9),
-            "false_negative_rate": fn / (fn + tp + 1e-9),
+            "accuracy": self.accuracy(),
+            "fp_rate": self.false_positive_rate(),
+            "fn_rate": self.false_negative_rate()
         }
+
+    def calibration_gap(self):
+        """
+        Difference between LLM confidence and actual correctness.
+        """
+        if "llm_confidence" not in self.df.columns:
+            return None
+
+        correctness = (self.df[self.llm_col] == self.df[self.human_col]).astype(int)
+        return self.df["llm_confidence"].mean() - correctness.mean()
