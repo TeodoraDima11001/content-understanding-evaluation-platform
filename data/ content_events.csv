@@ -1,0 +1,11 @@
+user_id,content_id,watch_time,click,content_type
+
+1,101,30,1,music
+
+2,102,10,0,podcast
+
+3,103,50,1,audiobook
+
+4,104,5,0,music
+
+5,105,80,1,podcast
