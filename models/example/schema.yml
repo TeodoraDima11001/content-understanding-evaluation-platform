@@ -5,7 +5,7 @@ models:
     description: "A starter dbt model"
     columns:
       - name: id
-        description: "The primary key for this table"
+        description: "Primary key"
         tests:
           - unique
           - not_null
@@ -14,7 +14,7 @@ models:
     description: "A starter dbt model"
     columns:
       - name: id
-        description: "The primary key for this table"
+        description: "Primary key"
         tests:
           - unique
           - not_null
