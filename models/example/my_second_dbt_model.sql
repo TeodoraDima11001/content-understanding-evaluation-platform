@@ -1,6 +1,12 @@
+{{ config(materialized='table') }}
 
--- Use the `ref` function to select from other models
+with source_data as (
+
+    select 10 as id
+    union all
+    select 20 as id
+
+)
 
 select *
-from {{ ref('my_first_dbt_model') }}
-where id = 1
+from source_data
